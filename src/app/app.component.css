@@ -1,0 +1,72 @@
+:host {
+  background: black;
+  color: #dedede;
+  font-family: sans-serif;
+  overflow-y: hidden;
+}
+
+.toolbar {
+  position: fixed;
+  z-index: 2;
+  height: 47px;
+  top: 0;
+  left: 0;
+  border-bottom: solid 1px white;
+  width: 100vw;
+  padding-top: 8px;
+  padding-left: 8px;
+  padding-bottom: 8px;
+  background: #333;
+}
+
+main {
+  display: grid;
+  column-gap: 4px;
+  row-gap: 16px;
+  margin-top: 64px;
+  overflow-y: hidden;
+  height: calc(100vh - 75px);
+}
+
+.widget {
+  grid-column-start: 1;
+  grid-column-end: 1;
+}
+
+.widget li, .listing li {
+  cursor: pointer;
+}
+
+li {
+}
+
+.widget.allLists {
+}
+
+.widget.folders {
+}
+
+.widget.tags {
+}
+
+.listing {
+  grid-row-start: 1;
+  grid-row-end: 4;
+  grid-column-start: 2;
+  grid-column-end: 2;
+  border-left: solid 1px white;
+  height: calc(100vh - 66px);
+  overflow-y: auto;
+  width: 33vw;
+}
+
+.details {
+  grid-row-start: 1;
+  grid-row-end: 4;
+  grid-column-start: 3;
+  grid-column-end: 3;
+  width: 30em;
+  border-left: solid 1px white;
+  height: calc(100vh - 66px);
+  overflow-y: auto;
+}

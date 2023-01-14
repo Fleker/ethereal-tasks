@@ -22,12 +22,50 @@
     "lib": [
       "ES2022",
       "dom"
-    ]
+    ],
+    "paths": {
+      "assert": [
+        "./node_modules/assert"
+      ],
+      "crypto": [
+        "./node_modules/crypto-browserify"
+      ],
+      "http": [
+        "./node_modules/stream-http"
+      ],
+      "https": [
+        "./node_modules/https-browserify"
+      ],
+      "querystring": [
+        "./node_modules/querystring-es3"
+      ],
+      "url": [
+        "./node_modules/url"
+      ],
+      "path": [
+        "./node_modules/path-browserify"
+      ],
+      "process": [
+        "./node_modules/process"
+      ],
+      "stream": [
+        "./node_modules/stream-browserify"
+      ],
+      "util": [
+        "./node_modules/util"
+      ],
+      "zlib": [
+        "./node_modules/browserify-zlib"
+      ],
+      "os": [
+        "./node_modules/os-browserify"
+      ],
+    }
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
     "strictInjectionParameters": true,
     "strictInputAccessModifiers": true,
     "strictTemplates": true
-  }
+  },
 }
