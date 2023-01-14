@@ -4,10 +4,13 @@ import { JSONClient } from 'google-auth-library/build/src/auth/googleauth';
 // import { authenticate } from '@google-cloud/local-auth';
 import { tasks_v1 } from 'googleapis';
 import { GoogleAuth } from 'googleapis-common';
-import { getAllFolders, getAllTags } from './vtodo-google';
+import { exportAll, getAllFolders, getAllTags } from './vtodo-google';
 import { initializeApp } from 'firebase/app';
 import { Auth, getAuth, onAuthStateChanged, reauthenticateWithPopup, signInWithCredential, signInWithPopup, signOut } from "firebase/auth";
 import { GoogleAuthProvider } from "firebase/auth";
+import { GitHubTodoModule } from './todo-github';
+import { encodeModule, parseModule } from '@fleker/standard-feeds';
+import { TodoModule } from './module-todo';
 
 // If modifying these scopes, delete token.json.
 const SCOPES = 'https://www.googleapis.com/auth/tasks';
@@ -22,6 +25,15 @@ declare var google: any;
 
 const provider = new GoogleAuthProvider()
 provider.addScope(SCOPES)
+
+interface SyncOperations {
+  // inserts: tasks_v1.Params$Resource$Tasks$Insert[]
+  // updates: tasks_v1.Params$Resource$Tasks$Update[]
+  // completes: tasks_v1.Params$Resource$Tasks$Update[] /* Complete */
+  inserts: any[]
+  updates: any[]
+  completes: any[] /* Complete */
+}
 
 @Component({
   selector: 'app-root',
@@ -39,6 +51,7 @@ export class AppComponent implements AfterViewInit {
   authRes?: any
   loggedIn = false
   selection?: tasks_v1.Schema$Task
+  toolbarMsg = ''
 
   // /**
   //  * Reads previously authorized credentials from the save file.
@@ -264,7 +277,8 @@ export class AppComponent implements AfterViewInit {
   }
 
   sync() {
-    console.log('todo')
+    this.toolbarMsg = 'Starting sync...'
+    this.syncTasks('MDI2MjE1MjYzMDk2ODM3MDg2MTk6MDow')
   }
 
   async completed() {
@@ -282,5 +296,94 @@ export class AppComponent implements AfterViewInit {
     alert('Way to go!')
     this.unselect()
     this.pullGTasks()
+  }
+
+  async syncTasks(listId: string) {
+    const connectedServices: Record<string, TodoModule> = {
+      github: GitHubTodoModule
+    }
+    const res = await gapi.client.tasks.tasks.list({
+      tasklist: listId,
+      maxResults: 100,
+    })
+    const result = JSON.parse(res.body);
+    const gtasks = result.items!;
+  
+    for (const [key, module] of Object.entries(connectedServices)) {
+      console.log(`Syncing ${key}...`)
+      setTimeout(() => {
+        this.toolbarMsg = `Syncing ${key}...`
+      }, 0)
+      const mtasks = await module.onSync({ auth: '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' })
+      const existingTasks: Record<string, string> = {}
+      for (const gtask of gtasks) {
+        const parsedModules = parseModule(gtask.notes ?? '')
+        const usesThisModule = parsedModules.find(x => x.module === key)
+        if (usesThisModule) {
+          existingTasks[module.getUid(usesThisModule.param).trim()] = gtask.id!
+        }
+      }
+      const existingUids = Object.keys(existingTasks)
+      const operations: SyncOperations = {
+        inserts: [],
+        updates: [],
+        completes: [],
+      }
+      for (const mtask of mtasks) {
+        const taskUid = module.getUid(mtask.moduleParams).trim()
+        const tags = `#${mtask.moduleId} ${mtask.categories?.map(c => `#${c}`)}`
+        const encoding = encodeModule({module: mtask.moduleId, param: mtask.moduleParams})
+        const notes = `${mtask.description ?? ''}\n${tags}\n${encoding}`
+        if (existingUids.includes(taskUid)) {
+          // Exists in both GTasks and Module service
+          console.log(`  Updating: ${mtask.summary!}`)
+          operations.updates.push({
+            tasklist: listId,
+            task: existingTasks[taskUid],
+            id: existingTasks[taskUid],
+            title: mtask.summary!,
+            notes,
+          })
+          delete existingTasks[taskUid]
+        } else if (!existingUids.includes(taskUid)) {
+          // Exists in Module service but not GTasks
+          console.log(`  Inserting: ${mtask.summary!}`)
+          operations.inserts.push({
+            tasklist: listId,
+            title: mtask.summary!,
+            notes,
+          })
+        }
+      }
+      // All tasks in GTasks but not in Module service are completed
+      for (const remaining of Object.values(existingTasks)) {
+        console.log(`  Completing: ${remaining!}`)
+        if (!remaining) continue
+        operations.completes.push({
+          tasklist: listId,
+          task: remaining,
+          id: remaining,
+          status: 'completed',
+          completed: new Date().toISOString() /* Close enough */
+        })
+      }
+  
+      // Now perform all operations
+      for (const op of operations.inserts) {
+        await gapi.client.tasks.tasks.insert(op)
+      }
+      for (const op of operations.updates) {
+        await gapi.client.tasks.tasks.update(op)
+      }
+      for (const op of operations.completes) {
+        await gapi.client.tasks.tasks.update(op)
+      }
+    }
+    this.toolbarMsg = ''
+    this.pullGTasks()
+  }
+
+  export() {
+    console.log(exportAll(this.allTasks))
   }
 }
