@@ -1,12 +1,35 @@
-<div class="toolbar">
-  <button (click)="signin()" *ngIf="!loggedIn">Sign In</button>
-  <button (click)="signout()" *ngIf="loggedIn">Sign Out</button>
-  <button (click)="sync()" *ngIf="loggedIn">Sync</button>
-  <button (click)="export()" *ngIf="loggedIn">Export</button>
+<nav class="toolbar">
+  <button mat-raised-button (click)="signin()" *ngIf="!loggedIn">Sign In</button>
+  <button mat-icon-button (click)="signout()" *ngIf="loggedIn">
+    <mat-icon>logout</mat-icon>
+  </button>
+  <button mat-icon-button (click)="refresh()" *ngIf="loggedIn">
+    <mat-icon>refresh</mat-icon>  
+  </button>
+  <button mat-icon-button (click)="sync()" *ngIf="loggedIn">
+    <mat-icon>cloud_sync</mat-icon>
+  </button>
+  <button mat-icon-button (click)="export()" *ngIf="loggedIn">
+    <mat-icon>file_download</mat-icon>
+  </button>
+  <button mat-icon-button (click)="settings()" *ngIf="loggedIn">
+    <mat-icon>settings</mat-icon>
+  </button>
   <span>
     {{toolbarMsg}}
   </span>
-</div>
+  <mat-spinner
+    *ngIf="toolbarSpin"
+    diameter="24"
+    mode="indeterminate">
+  </mat-spinner>
+  <mat-progress-spinner
+    *ngIf="toolbarProgress > 0"
+    diameter="24"
+    mode="determinate"
+    [value]="toolbarProgress">
+  </mat-progress-spinner>
+</nav>
 
 <main>
   <div class="widget allLists">
@@ -17,6 +40,7 @@
     <b>Folders</b>
     <ul>
       <li *ngFor="let folder of folders" (click)="filterFolder(folder)">
+        <mat-icon class="{{iconClass(folder)}}">folder</mat-icon>
         {{folder}}
       </li>
     </ul>
@@ -25,6 +49,7 @@
     <b>Tags</b>
     <ul>
       <li *ngFor="let tag of tags" (click)="filterTag(tag)">
+        <mat-icon class="{{iconClass(tag)}}">folder</mat-icon>
         {{tag}}
       </li>
     </ul>
@@ -33,19 +58,37 @@
     <b>My Tasks ({{filteredTasks.length}})</b>
     <ul>
       <li *ngFor="let task of filteredTasks" (click)="selectTask(task)">
+        <mat-icon class="{{iconClass(task.title)}}">task</mat-icon>
         {{task.title}}
       </li>
     </ul>
   </div>
   <div class="details">
     <div *ngIf="selection">
-      <button (click)="unselect()">Close</button>
-      <br>
-      <b>{{selection?.title}}</b>
-      <br><br>
-      {{selection?.notes}}
-      <br><br>
-      <button (click)="completed()">Completed</button>
+      <button mat-icon-button (click)="unselect()" class="close">
+        <mat-icon>close</mat-icon>
+      </button>
+      <div class="detailsdiv">
+        <b>{{selection?.title}}</b>
+        <br><br>
+        <markdown [data]="selection?.notes ?? undefined">
+        </markdown>
+      </div>
+      <button mat-raised-button class="action" (click)="completed()">
+        <mat-icon>task_alt</mat-icon>
+        Completed
+      </button>
     </div>
   </div>
 </main>
+
+<dialog #dsettings>
+  <h1>App Settings</h1>
+  <div>
+    <strong>Plugin: GitHub</strong>
+    <br>
+    <input type="password" placeholder="GitHub Access Token" [(ngModel)]="clientSettings['github']['auth']" />
+  </div>
+  <br><br>
+  <button (click)="saveSettings()">Save and Close</button>
+</dialog>

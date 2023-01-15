@@ -17,8 +17,11 @@
     };
     function gisLoaded() { console.debug('gisLoaded') }
   </script>
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
-<body>
+<body class="mat-typography">
   <app-root></app-root>
   <script async defer src="https://apis.google.com/js/api.js"></script>
   <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>

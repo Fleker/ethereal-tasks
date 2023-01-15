@@ -31,15 +31,71 @@ main {
 .widget {
   grid-column-start: 1;
   grid-column-end: 1;
+  padding-left: 8px;
+  padding-top: 8px;
+}
+
+li mat-icon {
+  vertical-align: middle;
+  color: #607D8B;
+}
+
+li mat-icon.a, li mat-icon.x {
+  color: #F44336;
+}
+li mat-icon.c, li mat-icon.y {
+  color: #E91E63;
+}
+li mat-icon.e, li mat-icon.z {
+  color: #9C27B0;
+}
+li mat-icon.h, li mat-icon.b {
+  color: #3F51B5;
+}
+li mat-icon.i, li mat-icon.d {
+  color: #3F51B5;
+}
+li mat-icon.k, li mat-icon.f {
+  color: #E91E63;
+}
+li mat-icon.l, li mat-icon.g {
+  color: #2196F3;
+}
+li mat-icon.n, li mat-icon.j {
+  color: #03A9F4;
+}
+li mat-icon.o, li mat-icon.m {
+  color: #00BCD4;
+}
+li mat-icon.p {
+  color: #009688;
+}
+li mat-icon.q{
+  color: #4CAF50;
+}
+li mat-icon.r{
+  color: #8BC34A;
+}
+li mat-icon.s{
+  color: #FFEB3B;
+}
+li mat-icon.t{
+  color: #FFC107;
+}
+li mat-icon.u{
+  color: #FF9800;
+}
+li mat-icon.v{
+  color: #FF5722;
+}
+li mat-icon.w{
+  color: #795548;
 }
 
 .widget li, .listing li {
   cursor: pointer;
+  display: block;
 }
-
-li {
-}
-
 .widget.allLists {
 }
 
@@ -68,5 +124,44 @@ li {
   width: 30em;
   border-left: solid 1px white;
   height: calc(100vh - 66px);
+}
+
+.details .markdown {
+  background: #111;
+  border: solid 1px #999;
+  margin-left: 8px;
+}
+
+.detailsdiv {
   overflow-y: auto;
+  padding-left: 16px;
+  padding-top: 16px;
+  padding-bottom: 2em;
+}
+
+.details button.action {
+  margin-left: 16px;
+}
+
+dialog {
+  width: 40em;
+  background: #555;
+  color: #ccc;
+}
+
+dialog input {
+  width: 30em;
+}
+
+dialog h1 {
+  margin-top: 0px;
+  font-size: 20pt;
+}
+
+mat-spinner, mat-progress-spinner {
+  display: inline-block;
+}
+
+.toolbar button {
+  margin-right: 8px;
 }

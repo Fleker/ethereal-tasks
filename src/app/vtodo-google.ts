@@ -4,6 +4,7 @@ import { toString } from "@fleker/standard-feeds";
 export function getAllFolders(tasks: tasks_v1.Schema$Task[]): Set<string> {
   const foldersRegex = new RegExp('([a-zA-Z]*)\s?[:;>]\s?', 'g')
   const folders = new Set<string>()
+  folders.add('All')
   folders.add('Uncategorized')
   for (const task of tasks) {
     let entries: RegExpExecArray | null;
@@ -19,7 +20,7 @@ export function getAllFolders(tasks: tasks_v1.Schema$Task[]): Set<string> {
 export function getAllTags(tasks: tasks_v1.Schema$Task[]): Set<string> {
   const tagsRegex = new RegExp('#([a-z]*)', 'g')
   const tags = new Set<string>()
-  tags.add('Uncategorized')
+  tags.add('All')
   for (const task of tasks) {
     let entries: RegExpExecArray | null;
     while ((entries = tagsRegex.exec(task.notes ?? '')) !== null) {

@@ -1,4 +1,4 @@
-import { AfterViewInit, Component } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
 import { JWTInput } from 'google-auth-library';
 import { JSONClient } from 'google-auth-library/build/src/auth/googleauth';
 // import { authenticate } from '@google-cloud/local-auth';
@@ -11,6 +11,7 @@ import { GoogleAuthProvider } from "firebase/auth";
 import { GitHubTodoModule } from './todo-github';
 import { encodeModule, parseModule } from '@fleker/standard-feeds';
 import { TodoModule } from './module-todo';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 // If modifying these scopes, delete token.json.
 const SCOPES = 'https://www.googleapis.com/auth/tasks';
@@ -35,15 +36,20 @@ interface SyncOperations {
   completes: any[] /* Complete */
 }
 
+const connectedServices: Record<string, TodoModule> = {
+  github: GitHubTodoModule
+}
+
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
 })
 export class AppComponent implements AfterViewInit {
+  @ViewChild('dsettings') dsettings?: ElementRef<HTMLDialogElement>
   title = 'Ethereal Tasks';
-  folders: string[] = ['?']
-  tags: string[] = []
+  folders: string[] = ['Uncategorized']
+  tags: string[] = ['Uncategorized']
   allTasks: tasks_v1.Schema$Task[] = []
   filteredTasks: tasks_v1.Schema$Task[] = []
   service?: tasks_v1.Tasks;
@@ -52,6 +58,10 @@ export class AppComponent implements AfterViewInit {
   loggedIn = false
   selection?: tasks_v1.Schema$Task
   toolbarMsg = ''
+  toolbarSpin = false
+  toolbarProgress = 0
+  clientSettings: Record<string, Record<string, string>> = {}
+  selectedTaskList = 'MDI2MjE1MjYzMDk2ODM3MDg2MTk6MDow'
 
   // /**
   //  * Reads previously authorized credentials from the save file.
@@ -99,6 +109,25 @@ export class AppComponent implements AfterViewInit {
   //   }
   //   return client;
   // }
+
+  constructor(private snackbar: MatSnackBar) {
+    const localSettings = JSON.parse(localStorage.getItem('clientSettings') || '{}')
+    for (const [key, module] of Object.entries(connectedServices)) {
+      this.clientSettings[key] = {}
+      // Pre-load
+      module.getSyncParams().forEach(p => {
+        if (localSettings[key]?.[p]) {
+          this.clientSettings[key][p] = localSettings[key][p]
+        } else {
+          this.clientSettings[key][p] = ''
+        }
+      })
+    }
+  }
+
+  iconClass(str?: string | null) {
+    return str?.substring(1, 2).toLowerCase() ?? ''
+  }
 
   async ngAfterViewInit() {
     setInterval(() => {
@@ -193,13 +222,8 @@ export class AppComponent implements AfterViewInit {
         this.loggedIn = true
         console.log(`Welcome back ${user.displayName}`)
         this.authRes = await reauthenticateWithPopup(user, provider)
-        const refreshToken = (user.toJSON() as any)['stsTokenManager']['accessToken']
-        const idToken = await user.getIdTokenResult()
-        console.log(idToken)
-        // const credential = GoogleAuthProvider.credentialFromResult(idToken)
-        // await signInWithCredential(this.auth!, credential)
         gapi.load('client', () => {
-          this.pullGTasks()
+          this.pullGTasks(this.selectedTaskList)
         })
       } else {
         console.log('Nobody there?')
@@ -208,7 +232,8 @@ export class AppComponent implements AfterViewInit {
     })
   }
 
-  async pullGTasks() {
+  async pullGTasks(tasklist: string) {
+    this.toolbarSpin = true
     const credential = GoogleAuthProvider.credentialFromResult(this.authRes);
     const accessToken = credential!.accessToken;
     console.debug(`AccTkn: ${accessToken}`)
@@ -226,7 +251,7 @@ export class AppComponent implements AfterViewInit {
       // 3. Make the API request.
       console.log(gapi.client)
       const apiRequest = await gapi.client.tasks.tasks.list({
-        tasklist: 'MDI2MjE1MjYzMDk2ODM3MDg2MTk6MDow',
+        tasklist,
         maxResults: 100
       })
       const result = JSON.parse(apiRequest.body);
@@ -236,21 +261,25 @@ export class AppComponent implements AfterViewInit {
       this.filteredTasks = this.allTasks
     } catch (e) {
       console.error(e);
+    } finally {
+      this.toolbarSpin = false
     }
   }
 
   filterFolder(folder: string) {
     this.unselect()
-    if (folder !== 'Uncategorized') {
-      this.filteredTasks = this.allTasks.filter(x => x.title?.toLowerCase().startsWith(folder.toLowerCase()))
-    } else {
+    if (folder === 'Uncategorized') {
+      this.filteredTasks = this.allTasks.filter(x => !x.title?.toLowerCase().includes(':'))
+    } else if (folder === 'All') {
       this.filteredTasks = this.allTasks
+    } else {
+      this.filteredTasks = this.allTasks.filter(x => x.title?.toLowerCase().startsWith(folder.toLowerCase()))
     }
   }
 
   filterTag(tag: string) {
     this.unselect()
-    if (tag !== 'Uncategorized') {
+    if (tag !== 'All') {
       this.filteredTasks = this.allTasks.filter(x => x.notes?.includes(`#${tag}`))
     } else {
       this.filteredTasks = this.allTasks
@@ -276,9 +305,14 @@ export class AppComponent implements AfterViewInit {
     this.selection = undefined
   }
 
+  async refresh() {
+    this.authRes = await reauthenticateWithPopup(this.auth!.currentUser!, provider)
+    this.pullGTasks(this.selectedTaskList)
+  }
+
   sync() {
     this.toolbarMsg = 'Starting sync...'
-    this.syncTasks('MDI2MjE1MjYzMDk2ODM3MDg2MTk6MDow')
+    this.syncTasks(this.selectedTaskList)
   }
 
   async completed() {
@@ -287,21 +321,18 @@ export class AppComponent implements AfterViewInit {
       completed: new Date().toISOString(), /* Close enough */
     })
     await gapi.client.tasks.tasks.update({
-      tasklist: 'MDI2MjE1MjYzMDk2ODM3MDg2MTk6MDow',
+      tasklist: this.selectedTaskList,
       task: this.selection!.id,
       id: this.selection!.id,
       completed: new Date().toISOString(), /* Close enough */
       status: 'completed',
     })
-    alert('Way to go!')
+    this.snackbar.open('Way to go!', '', {duration: 3000})
     this.unselect()
-    this.pullGTasks()
+    this.pullGTasks(this.selectedTaskList)
   }
 
   async syncTasks(listId: string) {
-    const connectedServices: Record<string, TodoModule> = {
-      github: GitHubTodoModule
-    }
     const res = await gapi.client.tasks.tasks.list({
       tasklist: listId,
       maxResults: 100,
@@ -310,11 +341,13 @@ export class AppComponent implements AfterViewInit {
     const gtasks = result.items!;
   
     for (const [key, module] of Object.entries(connectedServices)) {
+      if (!this.clientSettings[key]) continue // Not setup
+      this.toolbarSpin = true
       console.log(`Syncing ${key}...`)
       setTimeout(() => {
         this.toolbarMsg = `Syncing ${key}...`
       }, 0)
-      const mtasks = await module.onSync({ auth: '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' })
+      const mtasks = await module.onSync(this.clientSettings[key])
       const existingTasks: Record<string, string> = {}
       for (const gtask of gtasks) {
         const parsedModules = parseModule(gtask.notes ?? '')
@@ -329,6 +362,8 @@ export class AppComponent implements AfterViewInit {
         updates: [],
         completes: [],
       }
+      let opCount = 0
+      let opDone = 0
       for (const mtask of mtasks) {
         const taskUid = module.getUid(mtask.moduleParams).trim()
         const tags = `#${mtask.moduleId} ${mtask.categories?.map(c => `#${c}`)}`
@@ -344,6 +379,7 @@ export class AppComponent implements AfterViewInit {
             title: mtask.summary!,
             notes,
           })
+          opCount++
           delete existingTasks[taskUid]
         } else if (!existingUids.includes(taskUid)) {
           // Exists in Module service but not GTasks
@@ -353,6 +389,7 @@ export class AppComponent implements AfterViewInit {
             title: mtask.summary!,
             notes,
           })
+          opCount++
         }
       }
       // All tasks in GTasks but not in Module service are completed
@@ -366,24 +403,57 @@ export class AppComponent implements AfterViewInit {
           status: 'completed',
           completed: new Date().toISOString() /* Close enough */
         })
+        opCount++
       }
   
       // Now perform all operations
       for (const op of operations.inserts) {
         await gapi.client.tasks.tasks.insert(op)
+        opDone++
+        setTimeout(() => {
+          this.toolbarSpin = false
+          this.toolbarProgress = opDone*100/opCount
+          this.toolbarMsg = `Syncing ${key}... ${opDone}/${opCount}`
+        }, 0)
       }
       for (const op of operations.updates) {
         await gapi.client.tasks.tasks.update(op)
+        opDone++
+        setTimeout(() => {
+          this.toolbarSpin = false
+          this.toolbarProgress = opDone*100/opCount
+          this.toolbarMsg = `Syncing ${key}... ${opDone}/${opCount}`
+        }, 0)
       }
       for (const op of operations.completes) {
         await gapi.client.tasks.tasks.update(op)
+        opDone++
+        setTimeout(() => {
+          this.toolbarSpin = false
+          this.toolbarProgress = opDone*100/opCount
+          this.toolbarMsg = `Syncing ${key}... ${opDone}/${opCount}`
+        }, 0)
       }
     }
-    this.toolbarMsg = ''
-    this.pullGTasks()
+    setTimeout(() => {
+      this.toolbarMsg = ``
+      this.toolbarSpin = false
+      this.toolbarProgress = 0
+    }, 0)
+    this.pullGTasks(this.selectedTaskList)
   }
 
   export() {
     console.log(exportAll(this.allTasks))
+  }
+
+  settings() {
+    this.dsettings!.nativeElement.showModal()
+  }
+
+  saveSettings() {
+    console.log(this.clientSettings)
+    localStorage.setItem('clientSettings', JSON.stringify(this.clientSettings))
+    this.dsettings!.nativeElement.close()
   }
 }

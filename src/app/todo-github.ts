@@ -40,5 +40,6 @@ export const GitHubTodoModule: TodoModule = {
     const data = assignedIssues.data as GitHubIssue[]
     return data.map(d => ghToTodo(d))
   },
+  getSyncParams: () => ['auth'],
   getUid: (params) => params as string,
 }
