@@ -50,6 +50,7 @@ export class AppComponent implements AfterViewInit {
   title = 'Ethereal Tasks';
   folders: string[] = ['Uncategorized']
   tags: string[] = ['Uncategorized']
+  allLists: tasks_v1.Schema$TaskList[] = []
   allTasks: tasks_v1.Schema$Task[] = []
   filteredTasks: tasks_v1.Schema$Task[] = []
   service?: tasks_v1.Tasks;
@@ -61,7 +62,9 @@ export class AppComponent implements AfterViewInit {
   toolbarSpin = false
   toolbarProgress = 0
   clientSettings: Record<string, Record<string, string>> = {}
-  selectedTaskList = 'MDI2MjE1MjYzMDk2ODM3MDg2MTk6MDow'
+  selectedTaskList?: string
+  xs?: string
+  gclient: any
 
   // /**
   //  * Reads previously authorized credentials from the save file.
@@ -129,13 +132,19 @@ export class AppComponent implements AfterViewInit {
     return str?.substring(1, 2).toLowerCase() ?? ''
   }
 
+  dueStr(str?: string | null) {
+    if (!str) return ''
+    return new Date(str).toLocaleString()
+  }
+
   async ngAfterViewInit() {
     setInterval(() => {
       // this.folders = [Math.random().toString()]
     }, 500)
-    // this.setupApi()
+    this.setupApi()
     // this.setupHello()
-    await this.setupFirebase()
+    this.setupGSI()
+    // await this.setupFirebase()
     // this.auth = google.auth.fromJSON(GOOGLE_CONFIG as JWTInput)
     // this.service = google.tasks({version: 'v1', auth: this.auth})
     // Load your tasks on a hardcoded list.
@@ -150,6 +159,36 @@ export class AppComponent implements AfterViewInit {
     this.folders = getAllFolders(this.allTasks)
     this.filteredTasks = this.allTasks
     */
+  }
+
+  async setupGSI() {
+    setTimeout(() => {
+      this.gclient = google.accounts.oauth2.initTokenClient({
+        client_id: CLIENT_ID,
+        scope: SCOPES,
+        callback: (response: any) => {
+          console.debug(response)
+          if (response.access_token) {
+            this.loggedIn = true
+            this.xs = response.access_token
+            this.pullGLists()
+          }
+        },
+      });
+      this.gclient.requestAccessToken()
+      // google.accounts.id.initialize({
+      //   client_id: CLIENT_ID,
+      //   callback: (credential: any) => {
+      //     console.debug(credential)
+      //   }
+      // })
+      // google.accounts.id.prompt((res: any) => {
+      //   console.debug(res)
+      //   if (res.getDismissedReason() === "credential_returned") {
+      //     console.debug('Welcome!')
+      //   }
+      // })
+    }, 500)
   }
 
   setupApi() {
@@ -223,7 +262,7 @@ export class AppComponent implements AfterViewInit {
         console.log(`Welcome back ${user.displayName}`)
         this.authRes = await reauthenticateWithPopup(user, provider)
         gapi.load('client', () => {
-          this.pullGTasks(this.selectedTaskList)
+          // this.pullGTasks(this.selectedTaskList)
         })
       } else {
         console.log('Nobody there?')
@@ -232,10 +271,37 @@ export class AppComponent implements AfterViewInit {
     })
   }
 
+  async pullGLists() {
+    this.toolbarSpin = true
+    const accessToken = this.xs
+    gapi.client.setToken({access_token: accessToken})
+    await gapi.client.init({
+      clientId: CLIENT_ID,
+      discoveryDocs: [
+        'https://discovery.googleapis.com/$discovery/rest',
+        'https://www.googleapis.com/discovery/v1/apis/tasks/v1/rest',
+      ]
+    });
+
+    try {
+      // 3. Make the API request.
+      const apiRequest = await gapi.client.tasks.tasklists.list({
+        maxResults: 100
+      })
+      const result = JSON.parse(apiRequest.body);
+      this.allLists = result.items
+      this.selectedTaskList = result.items[0].id
+      this.pullGTasks(result.items[0].id)
+    } catch (e) {
+      console.error(e);
+    } finally {
+      this.toolbarSpin = false
+    }
+  }
+
   async pullGTasks(tasklist: string) {
     this.toolbarSpin = true
-    const credential = GoogleAuthProvider.credentialFromResult(this.authRes);
-    const accessToken = credential!.accessToken;
+    const accessToken = this.xs
     console.debug(`AccTkn: ${accessToken}`)
     gapi.client.setToken({access_token: accessToken})
     await gapi.client.init({
@@ -296,6 +362,13 @@ export class AppComponent implements AfterViewInit {
     this.loggedIn = false
   }
 
+  selectList(list: tasks_v1.Schema$TaskList) {
+    if (list.id) {
+      this.selectedTaskList = list.id
+      this.pullGTasks(this.selectedTaskList)
+    }
+  }
+
   selectTask(task: tasks_v1.Schema$Task) {
     console.debug(task)
     this.selection = task
@@ -306,13 +379,13 @@ export class AppComponent implements AfterViewInit {
   }
 
   async refresh() {
-    this.authRes = await reauthenticateWithPopup(this.auth!.currentUser!, provider)
-    this.pullGTasks(this.selectedTaskList)
+    this.gclient.requestAccessToken()
+    // this.pullGTasks(this.selectedTaskList)
   }
 
   sync() {
     this.toolbarMsg = 'Starting sync...'
-    this.syncTasks(this.selectedTaskList)
+    this.syncTasks(this.selectedTaskList!)
   }
 
   async completed() {
@@ -329,7 +402,7 @@ export class AppComponent implements AfterViewInit {
     })
     this.snackbar.open('Way to go!', '', {duration: 3000})
     this.unselect()
-    this.pullGTasks(this.selectedTaskList)
+    this.pullGTasks(this.selectedTaskList!)
   }
 
   async syncTasks(listId: string) {
@@ -440,7 +513,7 @@ export class AppComponent implements AfterViewInit {
       this.toolbarSpin = false
       this.toolbarProgress = 0
     }, 0)
-    this.pullGTasks(this.selectedTaskList)
+    this.pullGTasks(this.selectedTaskList!)
   }
 
   export() {

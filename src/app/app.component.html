@@ -1,4 +1,24 @@
 <nav class="toolbar">
+  <!-- <div id="g_id_onload"
+    *ngIf="!loggedIn"
+     data-client_id="182076566691-9enoubad5scdd6vc0qdhkp5119rnqm6i.apps.googleusercontent.com"
+     data-context="signin"
+     data-ux_mode="popup"
+     data-callback="gotem"
+     data-nonce=""
+     data-auto_select="true"
+     data-auto_prompt="true">
+  </div>
+
+  <div class="g_id_signin"
+      *ngIf="!loggedIn"
+      data-type="standard"
+      data-shape="pill"
+      data-theme="filled_black"
+      data-text="signin_with"
+      data-size="large"
+      data-logo_alignment="left">
+  </div> -->
   <button mat-raised-button (click)="signin()" *ngIf="!loggedIn">Sign In</button>
   <button mat-icon-button (click)="signout()" *ngIf="loggedIn">
     <mat-icon>logout</mat-icon>
@@ -34,7 +54,12 @@
 <main>
   <div class="widget allLists">
     <b>All Lists</b>
-    <ul></ul>
+    <ul>
+      <li *ngFor="let list of allLists" (click)="selectList(list)">
+        <mat-icon class="{{iconClass(list.title)}}">checklist</mat-icon>
+        {{list.title}}
+      </li>
+    </ul>
   </div>
   <div class="widget folders">
     <b>Folders</b>
@@ -73,6 +98,9 @@
         <br><br>
         <markdown [data]="selection?.notes ?? undefined">
         </markdown>
+        <p *ngIf="selection?.due">
+          Due {{dueStr(selection?.due)}}
+        </p>
       </div>
       <button mat-raised-button class="action" (click)="completed()">
         <mat-icon>task_alt</mat-icon>
