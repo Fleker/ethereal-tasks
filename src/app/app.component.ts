@@ -54,7 +54,7 @@ export class AppComponent implements AfterViewInit {
   toolbarSpin = false
   toolbarProgress = 0
   clientSettings: Record<string, Record<string, string>> = {}
-  selectedTaskList?: string
+  selectedTaskList?: tasks_v1.Schema$TaskList
   xs?: string
   gclient: any
   syncErrors: string[] = []
@@ -131,21 +131,6 @@ export class AppComponent implements AfterViewInit {
     });
   }
 
-  async getAccessToken() {
-    console.log(this.auth?.currentUser)
-    const idToken = await this.auth?.currentUser?.getIdToken()
-    const cFR = GoogleAuthProvider.credentialFromResult({
-      user: this.auth!.currentUser!,
-      operationType: 'signIn',
-      providerId: 'google.com',
-    })
-    console.log(cFR)
-    // GoogleAuthProvider.
-    const fbToken = (this.auth?.currentUser?.toJSON() as any)['stsTokenManager']['accessToken']
-    const oaToken = GoogleAuthProvider.credential(idToken)
-    return oaToken.accessToken
-  }
-
   async pullGLists() {
     this.toolbarSpin = true
     const accessToken = this.xs
@@ -165,7 +150,7 @@ export class AppComponent implements AfterViewInit {
       })
       const result = JSON.parse(apiRequest.body);
       this.allLists = result.items
-      this.selectedTaskList = result.items[0].id
+      this.selectedTaskList = result.items[0]
       this.pullGTasks(result.items[0].id)
     } catch (e) {
       console.error(e);
@@ -242,8 +227,8 @@ export class AppComponent implements AfterViewInit {
 
   selectList(list: tasks_v1.Schema$TaskList) {
     if (list.id) {
-      this.selectedTaskList = list.id
-      this.pullGTasks(this.selectedTaskList)
+      this.selectedTaskList = list
+      this.pullGTasks(this.selectedTaskList.id!)
     }
   }
 
@@ -263,7 +248,7 @@ export class AppComponent implements AfterViewInit {
 
   sync() {
     this.toolbarMsg = 'Starting sync...'
-    this.syncTasks(this.selectedTaskList!)
+    this.syncTasks(this.selectedTaskList!.id!)
   }
 
   async completed() {
@@ -280,7 +265,7 @@ export class AppComponent implements AfterViewInit {
     })
     this.snackbar.open('Way to go!', '', {duration: 3000})
     this.unselect()
-    this.pullGTasks(this.selectedTaskList!)
+    this.pullGTasks(this.selectedTaskList!.id!)
   }
 
   async syncTasks(listId: string) {
@@ -400,7 +385,7 @@ export class AppComponent implements AfterViewInit {
     if (this.syncErrors.length) {
       this.derrors!.nativeElement.showModal()
     }
-    this.pullGTasks(this.selectedTaskList!)
+    this.pullGTasks(this.selectedTaskList!.id!)
   }
 
   export() {

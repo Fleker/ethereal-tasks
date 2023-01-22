@@ -60,7 +60,7 @@
     </ul>
   </div>
   <div class="listing">
-    <b>My Tasks ({{filteredTasks.length}})</b>
+    <b>{{selectedTaskList?.title}} ({{filteredTasks.length}})</b>
     <ul>
       <li *ngFor="let task of filteredTasks" (click)="selectTask(task)">
         <mat-icon class="{{iconClass(task.title)}}">task</mat-icon>
