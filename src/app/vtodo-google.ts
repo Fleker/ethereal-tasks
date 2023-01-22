@@ -6,14 +6,16 @@ export function getAllFolders(tasks: tasks_v1.Schema$Task[]): Set<string> {
   const folders = new Set<string>()
   folders.add('All')
   folders.add('Uncategorized')
+  const parsedFolders = []
   for (const task of tasks) {
     let entries: RegExpExecArray | null;
     while ((entries = foldersRegex.exec(task.title ?? '')) !== null) {
       if (entries[1].trim() === 'http') continue
       if (entries[1].trim() === 'https') continue
-      folders.add(entries[1])
+      parsedFolders.push(entries[1])
     }
   }
+  parsedFolders.sort().forEach(f => folders.add(f))
   return folders
 }
 
@@ -21,13 +23,15 @@ export function getAllTags(tasks: tasks_v1.Schema$Task[]): Set<string> {
   const tagsRegex = new RegExp('#([a-z]*)', 'g')
   const tags = new Set<string>()
   tags.add('All')
+  const parsedTags = []
   for (const task of tasks) {
     let entries: RegExpExecArray | null;
     while ((entries = tagsRegex.exec(task.notes ?? '')) !== null) {
       if (!entries[1].trim().length) continue
-      tags.add(entries[1])
+      parsedTags.push(entries[1])
     }
   }
+  parsedTags.sort().forEach(t => tags.add(t))
   return tags
 }
 
