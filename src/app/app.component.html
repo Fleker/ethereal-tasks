@@ -1,31 +1,11 @@
 <nav class="toolbar">
-  <!-- <div id="g_id_onload"
-    *ngIf="!loggedIn"
-     data-client_id="182076566691-9enoubad5scdd6vc0qdhkp5119rnqm6i.apps.googleusercontent.com"
-     data-context="signin"
-     data-ux_mode="popup"
-     data-callback="gotem"
-     data-nonce=""
-     data-auto_select="true"
-     data-auto_prompt="true">
-  </div>
-
-  <div class="g_id_signin"
-      *ngIf="!loggedIn"
-      data-type="standard"
-      data-shape="pill"
-      data-theme="filled_black"
-      data-text="signin_with"
-      data-size="large"
-      data-logo_alignment="left">
-  </div> -->
-  <button mat-raised-button (click)="signin()" *ngIf="!loggedIn">Sign In</button>
+  <button mat-raised-button (click)="signin()" *ngIf="!loggedIn">Sign In with Google</button>
   <button mat-icon-button (click)="signout()" *ngIf="loggedIn">
     <mat-icon>logout</mat-icon>
   </button>
-  <button mat-icon-button (click)="refresh()" *ngIf="loggedIn">
+  <!-- <button mat-icon-button (click)="refresh()" *ngIf="loggedIn">
     <mat-icon>refresh</mat-icon>  
-  </button>
+  </button> -->
   <button mat-icon-button (click)="sync()" *ngIf="loggedIn">
     <mat-icon>cloud_sync</mat-icon>
   </button>
@@ -119,4 +99,13 @@
   </div>
   <br><br>
   <button (click)="saveSettings()">Save and Close</button>
+</dialog>
+
+<dialog #derrors>
+  <h1>Sync Errors</h1>
+  <span>Visit your settings to fix potential errors.</span>
+  <ul>
+    <li *ngFor="let e of syncErrors">{{e}}</li>
+  </ul>
+  <button (click)="closeDialogs()">Okay</button>
 </dialog>
