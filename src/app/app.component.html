@@ -96,6 +96,10 @@
     <strong>Plugin: GitHub</strong>
     <br>
     <input type="password" placeholder="GitHub Access Token" [(ngModel)]="clientSettings['github']['auth']" />
+    <small>
+      Create a <a href="https://github.com/settings/tokens/new">personal access token</a>
+      with permissions: project, repo, user.
+    </small>
   </div>
   <br><br>
   <button (click)="saveSettings()">Save and Close</button>
