@@ -178,7 +178,8 @@ export class AppComponent implements AfterViewInit {
       console.log(gapi.client)
       const apiRequest = await gapi.client.tasks.tasks.list({
         tasklist,
-        maxResults: 100
+        maxResults: 100,
+        showCompleted: false,
       })
       const result = JSON.parse(apiRequest.body);
       this.allTasks = result.items.filter((x: tasks_v1.Schema$Task) => x.status === 'needsAction')
@@ -273,6 +274,7 @@ export class AppComponent implements AfterViewInit {
     const res = await gapi.client.tasks.tasks.list({
       tasklist: listId,
       maxResults: 100,
+
     })
     const result = JSON.parse(res.body);
     const gtasks = result.items!;
