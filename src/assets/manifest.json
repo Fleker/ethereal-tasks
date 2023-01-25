@@ -6,12 +6,12 @@
   "name": "Ethereal Tasks",
   "icons": [
     {
-      "src": "/assets/ic_launcher.png",
+      "src": "/ethereal-tasks/assets/ic_launcher.png",
       "type": "image/png",
       "sizes": "192x192"
     }
   ],
-  "start_url": "/",
+  "start_url": "/ethereal-tasks/",
   "display": "standalone",
   "theme_color": "#00BCD4",
   "background_color": "#333"
