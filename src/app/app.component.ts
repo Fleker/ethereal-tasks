@@ -389,7 +389,11 @@ export class AppComponent implements AfterViewInit {
   }
 
   export() {
-    console.log(exportAll(this.allTasks))
+    const ical = exportAll(this.allTasks)
+    const link = document.createElement("a");
+    link.href = `data:text/calendar;charset=utf-8,${encodeURIComponent(ical)}`
+    link.download = 'exported-gtasks.ical'
+    link.click();
   }
 
   settings() {
