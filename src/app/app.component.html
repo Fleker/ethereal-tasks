@@ -76,7 +76,7 @@
       <div class="detailsdiv">
         <b>{{selection?.title}}</b>
         <br><br>
-        <markdown [data]="selection?.notes ?? undefined">
+        <markdown [data]="selection?.notes ?? 'No details'">
         </markdown>
         <p *ngIf="selection?.due">
           Due {{dueStr(selection?.due)}}

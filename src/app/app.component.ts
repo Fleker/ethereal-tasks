@@ -257,7 +257,7 @@ export class AppComponent implements AfterViewInit {
       completed: new Date().toISOString(), /* Close enough */
     })
     await gapi.client.tasks.tasks.update({
-      tasklist: this.selectedTaskList,
+      tasklist: this.selectedTaskList!.id,
       task: this.selection!.id,
       id: this.selection!.id,
       completed: new Date().toISOString(), /* Close enough */
