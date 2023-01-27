@@ -165,3 +165,8 @@ mat-spinner, mat-progress-spinner {
 .toolbar button {
   margin-right: 8px;
 }
+
+textarea {
+  width: calc(100% - 16px);
+  height: calc(100vh - 300px);
+}

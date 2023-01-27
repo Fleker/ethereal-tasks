@@ -39,6 +39,7 @@ const connectedServices: Record<string, TodoModule> = {
 export class AppComponent implements AfterViewInit {
   @ViewChild('dsettings') dsettings?: ElementRef<HTMLDialogElement>
   @ViewChild('derrors') derrors?: ElementRef<HTMLDialogElement>
+  @ViewChild('dadd') dadd?: ElementRef<HTMLDialogElement>
   title = 'Ethereal Tasks';
   folders: string[] = ['Uncategorized']
   tags: string[] = ['Uncategorized']
@@ -58,6 +59,8 @@ export class AppComponent implements AfterViewInit {
   xs?: string
   gclient: any
   syncErrors: string[] = []
+  daddTitle?: string // For adding tasks
+  selectionMode: ('read' | 'write') = 'read'
 
   constructor(private snackbar: MatSnackBar) {
     const localSettings = JSON.parse(localStorage.getItem('clientSettings') || '{}')
@@ -141,7 +144,8 @@ export class AppComponent implements AfterViewInit {
         'https://discovery.googleapis.com/$discovery/rest',
         'https://www.googleapis.com/discovery/v1/apis/tasks/v1/rest',
       ]
-    });
+    })
+    console.log(gapi.client)
 
     try {
       // 3. Make the API request.
@@ -162,17 +166,8 @@ export class AppComponent implements AfterViewInit {
   async pullGTasks(tasklist: string) {
     this.toolbarSpin = true
     const accessToken = this.xs
-    console.debug(`AccTkn: ${accessToken}`)
     gapi.client.setToken({access_token: accessToken})
-    await gapi.client.init({
-      clientId: CLIENT_ID,
-      discoveryDocs: [
-        'https://discovery.googleapis.com/$discovery/rest',
-        'https://www.googleapis.com/discovery/v1/apis/tasks/v1/rest',
-      ]
-    });
 
-    console.log(gapi)
     try {
       // 3. Make the API request.
       console.log(gapi.client)
@@ -180,6 +175,7 @@ export class AppComponent implements AfterViewInit {
         tasklist,
         maxResults: 100,
         showCompleted: false,
+        quotaUser: `${Math.random()}` // Force no-304?
       })
       const result = JSON.parse(apiRequest.body);
       this.allTasks = result.items.filter((x: tasks_v1.Schema$Task) => x.status === 'needsAction')
@@ -239,6 +235,7 @@ export class AppComponent implements AfterViewInit {
   }
 
   unselect() {
+    this.selectionMode = 'read'
     this.selection = undefined
   }
 
@@ -405,6 +402,49 @@ export class AppComponent implements AfterViewInit {
   closeDialogs() {
     this.dsettings!.nativeElement.close()
     this.derrors!.nativeElement.close()
+    this.dadd!.nativeElement.close()
+  }
+
+  async addTask() {
+    this.closeDialogs()
+    this.toolbarSpin = true
+    try {
+      await gapi.client.tasks.tasks.insert({
+        tasklist: this.selectedTaskList!.id,
+        title: this.daddTitle
+      })
+      setTimeout(() => {
+        this.pullGTasks(this.selectedTaskList!.id!)
+      }, 1000)
+      this.snackbar.open('Added task, you busy beaver!', '', { duration: 5000 }) 
+    } catch (e: any) {
+      this.snackbar.open(e, '', { duration: 5000 })
+    } finally {
+      this.toolbarSpin = false
+    }
+  }
+
+  async updateSelection() {
+    this.toolbarSpin = true
+    console.log(this.selection)
+    try {
+      await gapi.client.tasks.tasks.update({
+        tasklist: this.selectedTaskList!.id,
+        task: this.selection!.id,
+        id: this.selection!.id,
+        title: this.selection!.title,
+        notes: this.selection!.notes,
+      })
+      setTimeout(() => {
+        this.pullGTasks(this.selectedTaskList!.id!)
+      }, 1000)
+      this.snackbar.open('Updated task, you busy beaver!', '', { duration: 5000 }) 
+    } catch (e: any) {
+      this.snackbar.open(e, '', { duration: 5000 })
+    } finally {
+      this.toolbarSpin = false
+      this.selectionMode = 'read'
+    }
   }
 
   saveSettings() {
