@@ -26,7 +26,7 @@ export function getAllTags(tasks: tasks_v1.Schema$Task[]): Set<string> {
   const parsedTags = []
   for (const task of tasks) {
     let entries: RegExpExecArray | null;
-    while ((entries = tagsRegex.exec(task.notes ?? '')) !== null) {
+    while ((entries = tagsRegex.exec(task.notes?.toLowerCase() ?? '')) !== null) {
       if (!entries[1].trim().length) continue
       parsedTags.push(entries[1])
     }

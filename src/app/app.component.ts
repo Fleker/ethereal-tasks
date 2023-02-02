@@ -203,7 +203,7 @@ export class AppComponent implements AfterViewInit {
   filterTag(tag: string) {
     this.unselect()
     if (tag !== 'All') {
-      this.filteredTasks = this.allTasks.filter(x => x.notes?.includes(`#${tag}`))
+      this.filteredTasks = this.allTasks.filter(x => x.notes?.toLowerCase().includes(`#${tag}`))
     } else {
       this.filteredTasks = this.allTasks
     }
