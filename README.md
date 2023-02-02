@@ -1,27 +1,53 @@
-# EtherealTasks
+# Ethereal Tasks
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 15.1.0.
+This is a PWA for Google Tasks which takes advantage of auto-organization,
+allowing you to add tasks easily from a mobile app while getting a
+thorough management and viewer on larger screens.
 
-## Development server
+It also supports a modular plugin framework in which you can connect to
+multiple task systems and save their tasks in Google Tasks so that you
+can have one app for everything.
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+This project is built on top of VTODO objects in the iCalendar spec, allowing
+for standardization and a great deal of portability.
 
-## Code scaffolding
+## Try it out
+The PWA can be opened in https://felker.dev/etheral-tasks. This demo is hosted
+on GitHub pages.
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+You can **Sign In With Google**. Due to API restrictions for non-certified
+apps, you'll be presented with a warning.
 
-## Build
+Note: This application works entirely in the browser. No data is being stored
+in the cloud.
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+### Filtering
 
-## Running unit tests
+When you start a task name with a particular string followed by a colon, ie.
+"Tasks: Update README", that creates a _Folder_ called **Tasks**. Tapping on
+that item in the sidebar will show only items that follow that pattern.
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+When you add a hashtag in the description of a task, ie. "add setup #github #tasks" that creates two _Tags_ called **github** and **tasks**. Tapping on either
+will show only items that contain the same hashtag.
 
-## Running end-to-end tests
+If you write in Markdown in task notes, that will be processed as Markdown when
+rendered in the sidebar.
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+### Sync GitHub
+You can sync GitHub tasks assigned to you to this app. They'll appear as
+standard entries with `#github` in their description for quick filtering.
 
-## Further help
+To do this, you'll need to generate a GitHub token that has access to your
+repos and paste that token into your browser. This is saved in browser
+local storage. Then it will be create, update, or complete tasks when you
+run the sync.
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+## Setup and run locally
+
+This is an Angular-based application that uses Google's frontend web APIs.
+
+- You'll need to create a Google Cloud Project
+  - Will require you enabling the Google Tasks API
+  - Obtain a `CLIENT_ID` and update `app.component.ts`
+- `npm install`
+- `npm start`
