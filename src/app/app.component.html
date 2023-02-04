@@ -9,6 +9,9 @@
   <button mat-icon-button (click)="sync()" *ngIf="loggedIn">
     <mat-icon>cloud_sync</mat-icon>
   </button>
+  <button mat-icon-button (click)="addTaskDialog()" *ngIf="loggedIn">
+    <mat-icon>add_task</mat-icon>
+  </button>
   <button mat-icon-button (click)="export()" *ngIf="loggedIn">
     <mat-icon>file_download</mat-icon>
   </button>
@@ -132,6 +135,8 @@
 <dialog #dadd>
   <h1>Add a new Task</h1>
   <input [(ngModel)]="daddTitle" placeholder="Title" />
-  <button (click)="addTask()">Add</button>
-  <button (click)="closeDialogs()">Cancel</button>
+  <br><br>
+  <button mat-raised-button color="primary" (click)="addTask()">Add</button>
+  <br><br>
+  <button mat-raised-button (click)="closeDialogs()">Cancel</button>
 </dialog>

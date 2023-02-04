@@ -30,6 +30,15 @@ export function getAllTags(tasks: tasks_v1.Schema$Task[]): Set<string> {
       if (!entries[1].trim().length) continue
       parsedTags.push(entries[1])
     }
+    if (task.due) {
+      const d = new Date(task.due)
+      const pastDue = d < new Date()
+      if (pastDue) {
+        parsedTags.push('due-past')
+      } else {
+        parsedTags.push('due-soon')
+      }
+    }
   }
   parsedTags.sort().forEach(t => tags.add(t))
   return tags

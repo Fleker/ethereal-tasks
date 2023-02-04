@@ -202,7 +202,13 @@ export class AppComponent implements AfterViewInit {
 
   filterTag(tag: string) {
     this.unselect()
-    if (tag !== 'All') {
+    if (tag === 'due-past') {
+      const now = new Date()
+      this.filteredTasks = this.allTasks.filter(x => x.due && new Date(x.due) < now)
+    } else if (tag === 'due-soon') {
+      const now = new Date()
+      this.filteredTasks = this.allTasks.filter(x => x.due && new Date(x.due) > now)
+    } else if (tag !== 'All') {
       this.filteredTasks = this.allTasks.filter(x => x.notes?.toLowerCase().includes(`#${tag}`))
     } else {
       this.filteredTasks = this.allTasks
@@ -397,6 +403,10 @@ export class AppComponent implements AfterViewInit {
 
   settings() {
     this.dsettings!.nativeElement.showModal()
+  }
+
+  addTaskDialog() {
+    this.dadd!.nativeElement.showModal()
   }
 
   closeDialogs() {
