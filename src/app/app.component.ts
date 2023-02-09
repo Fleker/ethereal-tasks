@@ -426,6 +426,7 @@ export class AppComponent implements AfterViewInit {
       setTimeout(() => {
         this.pullGTasks(this.selectedTaskList!.id!)
       }, 1000)
+      this.daddTitle = '' // Reset
       this.snackbar.open('Added task, you busy beaver!', '', { duration: 5000 }) 
     } catch (e: any) {
       this.snackbar.open(e, '', { duration: 5000 })
