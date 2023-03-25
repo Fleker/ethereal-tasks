@@ -272,6 +272,16 @@ export class AppComponent implements AfterViewInit {
     this.pullGTasks(this.selectedTaskList!.id!)
   }
 
+  async del() {
+    await gapi.client.tasks.tasks.delete({
+      tasklist: this.selectedTaskList!.id,
+      task: this.selection!.id,
+    })
+    this.snackbar.open('No more task for you!', '', {duration: 3000})
+    this.unselect()
+    this.pullGTasks(this.selectedTaskList!.id!)
+  }
+
   async syncTasks(listId: string) {
     this.syncErrors = []
     const res = await gapi.client.tasks.tasks.list({
