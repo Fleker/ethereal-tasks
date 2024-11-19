@@ -266,6 +266,8 @@ export class AppComponent implements AfterViewInit {
       id: this.selection!.id,
       completed: new Date().toISOString(), /* Close enough */
       status: 'completed',
+      title: this.selection!.title,
+      notes: this.selection!.notes,
     })
     this.snackbar.open('Way to go!', '', {duration: 3000})
     this.unselect()
